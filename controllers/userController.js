@@ -1,10 +1,11 @@
 const { body, validationResult, sanitizeBody } = require("express-validator");
 const User = require("../models/user");
 const Recipe = require("../models/recipe");
-const userService = require("../services/userService");
+const Service = require("../services/userServices");
+const userServices = new Service(User);
 
 //Display all users
-exports.users_list = function (req, res, next) {
+module.exports.users_list = function (req, res, next) {
   User.find().exec(function (err, list_users) {
     if (err) {
       return next(err);
@@ -13,10 +14,23 @@ exports.users_list = function (req, res, next) {
   });
 };
 
-exports.userCreate = (req, res) => {
-  const body = req.body;
-  if (User.findByUsername) {
-    throw new Error("User name already exist");
+module.exports.userCreate = (req, res) => {
+  try {
+    let response = {};
+    console.log(req.body);
+    userServices.register(req.body, function (err, result) {
+      if (err) {
+        response.data = err.data;
+        response.success = false;
+        res.status(err.status).send(response);
+      } else {
+        response.data = result;
+        response.success = true;
+        res.status(200).send(response);
+      }
+    });
+  } catch (err) {
+    res.status(500).send("Some error occured");
   }
 };
 

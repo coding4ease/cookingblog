@@ -26,6 +26,7 @@ const UserSchema = new Schema(
       required: [true, "Email is required"],
       unique: true,
     },
+    password: { type: String },
     address: { type: String, maxlength: 100 },
     phone: { type: Number, required: [true, "Phone no is mandatory"] },
     user_name: { type: String, required: [true, "Enter a user name"] },
@@ -44,5 +45,9 @@ UserSchema.virtual("url").get(function () {
 UserSchema.statics.findByUsername = function (name) {
   return this.find({ user_name: name });
 };
+
+UserSchema.static("userEmailExists", function (email) {
+  return this.find({ email: email }).length > 0 ? true : false;
+});
 
 module.exports = mongoose.model("User", UserSchema);

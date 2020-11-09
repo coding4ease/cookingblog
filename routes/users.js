@@ -6,7 +6,7 @@ const user_controller = require("../controllers/userController");
 router.get("/", user_controller.users_list);
 
 //POST request for creating a user.
-router.post("/", user_controller.user_create);
+router.post("/", user_controller.userCreate);
 
 //DELETE request to delete user
 router.delete("/:id", function () {});
