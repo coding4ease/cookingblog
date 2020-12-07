@@ -140,34 +140,92 @@ class UserServices {
   }
 
   async update(id, data, callback) {
-    try {
-      User.update(id, data)
-        .then((user) => {
-          if (user) {
-            callback(null, user);
-          } else {
-            callback({ message: "User update failed", status: 500 });
-          }
-        })
-        .catch((error) => {
-          callback({ message: "User update failed", status: 500, error });
-        });
-    } catch (error) {
-      return callback({ message: "User update failed", error });
-    }
+    User.update(id, data)
+      .then((user) => {
+        if (user) {
+          return callback(null, user);
+        } else {
+          return callback({ message: "User not found", status: 404 });
+        }
+      })
+      .catch((error) => {
+        callback({ message: "User update failed", status: 500, error });
+      });
   }
 
   async changePassword(data, callback) {
-    try {
-      let { old_password, username, password } = data;
-      if (this.checkUserPassword({ username, password })) {
-      } else {
-        return callback({ message: "Password is incorrect", status: 401 });
-      }
-    } catch (error) {
-      return callback({ message: "Internal Error", error });
-    }
+    let { password, username, newPassword } = data;
+    console.log(data);
+    User.model
+      .findByUserName(username)
+      .then((user) => {
+        console.log(user);
+        if (user) {
+          if (user.validPassword(password)) {
+            user
+              .hashPassword(newPassword)
+              .then((hash) => {
+                user.password = hash;
+                user.save(function (err, result) {
+                  if (err) {
+                    return callback({
+                      message: "Password change failed",
+                      status: 500,
+                    });
+                  } else {
+                    return callback(null, result);
+                  }
+                });
+              })
+              .catch((error) => {
+                return callback({
+                  message: "Password hashing failed",
+                  status: 500,
+                  error,
+                });
+              });
+          } else {
+            return callback({ message: "Password is incorrect", status: 401 });
+          }
+        } else {
+          return callback({ message: "User not found", status: 404 });
+        }
+      })
+      .catch((error) => {
+        return callback({ message: "Internal Error", error, status: 500 });
+      });
+  }
+
+  async getAllUsers(callback) {
+    User.getAll({})
+      .then(({ data, total }) => {
+        if (!data) {
+          return callback({ message: "There are no users", status: 404 });
+        }
+        let users = data.map((user) => {
+          console.log(Object.getOwnPropertyNames(user));
+          delete user["permissions"];
+          console.log(user);
+          return user;
+        });
+        return callback(null, { users, total });
+      })
+      .catch((err) => {
+        callback({ message: "Internal Error", error });
+      });
+  }
+
+  async delete(id, callback) {
+    User.delete(id)
+      .then((deletedDocument) => {
+        if (deletedDocument) {
+          return callback(null, deletedDocument);
+        }
+        return callback({ message: "User not found", status: 404 });
+      })
+      .catch((error) => {
+        return callback({ message: "User removal failed", error, status: 500 });
+      });
   }
 }
-
 module.exports = UserServices;

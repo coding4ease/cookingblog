@@ -38,7 +38,7 @@ module.exports = class DatabaseServices {
     });
   }
 
-  getAll(query, callback) {
+  getAll(query) {
     return new Promise(async (resolve, reject) => {
       let { skip, limit } = query;
 
@@ -60,7 +60,7 @@ module.exports = class DatabaseServices {
       }
       try {
         let items = await this.model.find(query).skip(skip).limit(limit);
-        let total = await this.model.count();
+        let total = await this.model.countDocuments();
         resolve({ data: items, total: total });
       } catch (err) {
         reject(err);
@@ -82,6 +82,7 @@ module.exports = class DatabaseServices {
       try {
         let updatedDocument = await this.model.findByIdAndUpdate(id, data, {
           new: true,
+          runValidators: true,
         });
         resolve(updatedDocument);
       } catch (err) {
