@@ -6,6 +6,7 @@ const connectDB = async () => {
   mongoose.connect(mongoDB, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useFindAndModify: false,
   });
   const db = mongoose.connection;
   db.on("connected", function () {
@@ -14,7 +15,15 @@ const connectDB = async () => {
   db.on("error", function () {
     console.error.bind(console, "MongoDB connection error:");
     process.exit(1);
-  }
+  });
+  db.on("close", function () {
+    console.error.bind(console, "MongoDB service closed");
+    process.exit();
+  });
+  db.on("disconnected", function () {
+    console.error.bind(console, "MongoDB is not connected");
+    process.exit(1);
+  });
 };
 
 module.exports = connectDB;
